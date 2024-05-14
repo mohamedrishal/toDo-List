@@ -69,9 +69,9 @@ const Auth = ({ register }) => {
   return (
     <div
       style={{ width: "100%", height: "100vh" }}
-      className="container-fluid bg-success d-flex align-items-center justify-content-center "
+      className="container-fluid bg-success-subtle d-flex align-items-center justify-content-center "
     >
-      <div className="card shadow p-5 bg-success">
+      <div className="card shadow p-5 bg-success-subtle">
         <div className="row  align-items-center">
           <div className="col-lg-6">
             <img
@@ -85,12 +85,12 @@ const Auth = ({ register }) => {
               <h1 className="fw-bolder text-dark mt-2">
                 <i className=""></i>ToDo List
               </h1>
-              <h5 className="fw-bolder mt-2 pb-3 text-light">
+              <h5 className="fw-bolder mt-2 pb-3 text-secondary">
                 {isRegisterForm
                   ? "Sign up to Your Account"
                   : "Sign In to Your Account"}
               </h5>
-              <Form className="text-light w-100">
+              <Form className=" text-secondary w-100">
                 {isRegisterForm && (
                   <Form.Group className="mb-3" controlId="formBasicEmail">
                     <Form.Control

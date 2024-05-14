@@ -1,23 +1,37 @@
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import Todo from "../Components/Todo";
 import TodosList from "../Components/TodosList";
 import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
+import { addTodosAPI, userTodosAPI } from "../Services/allAPI";
+import { DeleteTodosResponseContext, EditTodosResponseContext, ItemSelectedResponseContext, addTodosResponseContext } from "../Context/ContextShare";
 
 const Home = () => {
   const [show, setShow] = useState(false);
+
+
+  const {addTodosResponse,setAddTodosResponse} = useContext(addTodosResponseContext)
+  const { deleteTodosResponse, setDeleteTodosResponse} = useContext(DeleteTodosResponseContext)
+
+  const {itemSelectedResponse, setItemSelectedResponse } = useContext(ItemSelectedResponseContext)
+
+  const { editTodosResponse, setEditTodosResponse } = useContext(
+    EditTodosResponseContext
+  );
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   const [username, setUsername] = useState("");
 
-  const [projectDetails, SetProjectDetails] = useState({
+  const [todosDetails, SetTodosDetails] = useState({
     todoName: "",
     description: "",
   });
+
+  const [userTodos, setUserTodos] = useState([]);
 
   useEffect(() => {
     if (sessionStorage.getItem("exstingUser")) {
@@ -25,35 +39,68 @@ const Home = () => {
     }
   }, []);
 
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    if (sessionStorage.getItem("token")) {
+      setToken(sessionStorage.getItem("token"));
+    } else {
+      setToken("");
+    }
+  }, []);
+
+  const getUserProjects = async () => {
+    if (sessionStorage.getItem("token")) {
+      const token = sessionStorage.getItem("token");
+      const reqHeader = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      const result = await userTodosAPI(reqHeader);
+      if (result.status === 200) {
+        setUserTodos(result.data);
+      } else {
+        alert(result.response.data);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getUserProjects();
+  }, [addTodosResponse,deleteTodosResponse,editTodosResponse]);
+
   const handleAdd = async (e) => {
     e.preventDefault();
-    const { todoName, description } = projectDetails;
-    if (!todoName || !description) {
-      toast.info("Please Fill the Form");
+    const { todoName } = todosDetails;
+    if (!todoName) {
+      alert("Please Fill the Form");
     } else {
-      const reqBody = new FormData();
-
-      reqBody.append("todoName", todoName);
-      reqBody.append("description", description);
-
       if (token) {
         const reqHeader = {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         };
 
-        const result = await addProjectAPI(reqBody, reqHeader);
+        const result = await addTodosAPI(todosDetails, reqHeader);
         if (result.status === 200) {
           console.log(result.data);
           handleClose();
           alert("Project Added");
-          // setAddProjectResponse(result.data)
+          SetTodosDetails({
+            todoName: "",
+            description: "",
+          });
+          setAddTodosResponse(result.data)
+          handleClose();
         } else {
-          console.log(result);
+          alert(result);
           console.log(result.response.data);
         }
       }
     }
   };
+
+
+ 
 
   return (
     <div>
@@ -75,18 +122,42 @@ const Home = () => {
             style={{ overflowY: "auto", maxHeight: "100%", height: "76vh" }}
             className="p-3 bg-success-subtle w-100 shadow"
           >
-            <TodosList />
+            {userTodos?.length > 0 ? (
+              [...userTodos].reverse()
+              ?.map((todos, index) => (
+                <TodosList
+                 
+                  key={index}
+                  todos={todos}
+                />
+              ))
+            ) : (
+              <p className="text-danger fw-bolder fs-5 mt-2">
+                No Projects Uploaded Yet!!
+              </p>
+            )}
           </div>
         </div>
 
         <div className="col-lg-9   bg-success-subtle">
           <div className="text-end px-5 mt-4  fw-bold">
-            <button className=" btn btn-outline-danger">
+            <button  className=" btn btn-outline-danger">
               <i class="fa-solid fa-right-from-bracket"></i> LogOut{" "}
             </button>
           </div>
           <div className="p-5">
-            <Todo />
+            {userTodos?.map((item, index) =>
+              itemSelectedResponse === null && index === 0 ? (
+                <div key={item.id} style={{height:'60vh'}} className="d-flex flex-column justify-content-center align-items-center">
+                  <h1>
+                    <i className="fa-regular fa-file-excel fs-1"></i>
+                  </h1>
+                  Empty
+                </div>
+              ) : (
+                itemSelectedResponse === item?._id && <Todo item={item} />
+              )
+            )}
           </div>
         </div>
       </div>
@@ -103,13 +174,34 @@ const Home = () => {
             size="lg"
             type="text"
             placeholder="Name"
+            value={todosDetails.todoName}
+            onChange={(e) =>
+              SetTodosDetails({
+                ...todosDetails,
+                todoName: e.target.value,
+              })
+            }
           />
+          <Form.Group className="mb-3" controlId="exampleForm.ControlTextarea1">
+            <Form.Label>description</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={todosDetails.description}
+              onChange={(e) =>
+                SetTodosDetails({
+                  ...todosDetails,
+                  description: e.target.value,
+                })
+              }
+            />
+          </Form.Group>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleClose}>
+          <Button variant="primary" onClick={handleAdd}>
             Save Changes
           </Button>
         </Modal.Footer>

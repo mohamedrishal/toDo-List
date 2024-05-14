@@ -1,6 +1,8 @@
 import React from "react";
 
-const Todo = () => {
+const Todo = ({item}) => {
+
+   
   return (
     <div>
       <h1
@@ -10,11 +12,11 @@ const Todo = () => {
         }}
         className=" mb-2 p-3  shadow border  fw-bolder fs-2"
       >
-        Task Name 📌
+        {item.todoName} 📌
       </h1>
 
       <div data-mdb-input-init className="form-outline mt-3  ">
-        <textarea style={{resize: "none"}} className="form-control" id="form7Example7" rows="16"></textarea>
+        <textarea style={{resize: "none"}} className="form-control" value={item.description} id="form7Example7" rows="16"></textarea>
       </div>
     </div>
   );
